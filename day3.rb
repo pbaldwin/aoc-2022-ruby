@@ -1,16 +1,10 @@
-require 'set'
-
 class RucksackParser
   def initialize(data)
-    @data = data.map { |s| s.chomp.split("").each_slice(s.size / 2).map(&:to_set) }
+    @data = data.map { |s| s.chomp.split("").each_slice(s.size / 2).to_a }
   end
 
   def find_duplicate(set_a, set_b)
-    set_b.each do |ch|
-      if set_a.include? ch 
-         return ch
-      end
-    end
+    (set_a & set_b).first
   end
 
   def get_priority(ch)
@@ -36,14 +30,8 @@ class TrioRucksackParser < RucksackParser
     @data = data.map { |s| s.chomp.split("").uniq }.each_slice(3).to_a
   end
 
-  def find_duplicate(*lists)
-    sorted = lists.flatten.sort
-
-    sorted.each_with_index do |ch, i|
-      if ch == sorted[i + 2]
-        return ch
-      end
-    end
+  def find_duplicate(set_a, set_b, set_c)
+    (set_a & set_b & set_c).first
   end
 end
 
