@@ -1,18 +1,25 @@
 class Directory
-  attr_accessor :name, :contents
+  attr_accessor :name, :parent
 
   def initialize(name, parent = nil)
     @contents = []
     @name = name
     @parent = parent
+    @size = 0
+    @changed = true
   end
 
-  def parent
-    @parent
+  def <<(el)
+    @changed = true
+    @contents << el
   end
 
   def size
-    @contents.map { |e| e.size }.sum
+    if @changed
+      @size = @contents.map { |e| e.size }.sum
+    end
+
+    @size
   end
 
   def child_by_name(name)
@@ -46,26 +53,25 @@ class FileSystem
     MAX_SIZE - @file_system.size
   end
 
-  def ls(*args)
-    # noop
-  end
-
   def mkdir(name)
     dir = Directory.new(name, @current_dir)
-    @current_dir.contents << dir
+    @current_dir << dir
     @directories << dir
   end
 
   def new_file(name, size)
-    @current_dir.contents << DirFile.new(name, size)
+    @current_dir << DirFile.new(name, size)
   end
 end
 
 def populate_filesystem(fs, lines)
   lines.each do |line|
-    if line[0] == "$"
-      _, cmd, op = line.split (" ")
-      fs.send cmd, op
+
+    next if line.start_with? "$ ls" # nothing to see here
+
+    if line.start_with? "$ cd"
+      _, _, op = line.split (" ")
+      fs.cd op
       next
     end
 
@@ -93,7 +99,7 @@ if $PROGRAM_NAME == __FILE__
   dir = Directory.new("test")
 
   10.times do
-    dir.contents << DirFile.new("foo", 10)
+    dir << DirFile.new("foo", 10)
   end
 
   puts "Directory Size test pass: #{dir.size == 100}"
